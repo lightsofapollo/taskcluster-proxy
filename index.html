@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Taskcluster-proxy by taskcluster</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Taskcluster-proxy</h1>
+      <h2 class="project-tagline">Taskcluster proxy (written in go) for docker-worker</h2>
+      <a href="https://github.com/taskcluster/taskcluster-proxy" class="btn">View on GitHub</a>
+      <a href="https://github.com/taskcluster/taskcluster-proxy/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/taskcluster/taskcluster-proxy/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="taskcluster-proxy" class="anchor" href="#taskcluster-proxy" aria-hidden="true"><span class="octicon octicon-link"></span></a>taskcluster-proxy</h1>
+
+<p><img hspace="20" align="left" src="https://tools.taskcluster.net/lib/assets/taskcluster-120.png">
+<a href="http://travis-ci.org/taskcluster/taskcluster-proxy"><img src="https://travis-ci.org/taskcluster/taskcluster-proxy.svg?branch=master" alt="Build Status"></a>
+<a href="https://godoc.org/github.com/taskcluster/taskcluster-proxy"><img src="https://godoc.org/github.com/taskcluster/taskcluster-proxy?status.svg" alt="GoDoc"></a>
+<a href="https://coveralls.io/github/taskcluster/taskcluster-proxy?branch=master"><img src="https://coveralls.io/repos/taskcluster/taskcluster-proxy/badge.svg?branch=master&amp;service=github" alt="Coverage Status"></a>
+<a href="http://mozilla.org/MPL/2.0"><img src="https://img.shields.io/badge/license-MPL%202.0-orange.svg" alt="License"></a></p>
+
+<p>taskcluster-proxy is the proxy server which is used by TaskCluster workers to
+enable individual tasks to talk to various TaskCluster services (auth, queue,
+scheduler, ...) without hardcoding credentials into the containers themselves.</p>
+
+<p>When used by docker-worker (main use case) the taskcluster-proxy runs in a
+separate docker container linked to the task docker container. However, there
+is no requirement for the taskcluster-proxy to run inside a docker container,
+you can also run it natively. It is written in go (golang) and therefore
+compiles to a native executable (in other words, you do not need to install go
+(golang) in order to run it).</p>
+
+<h2>
+<a id="download-binary-release" class="anchor" href="#download-binary-release" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download binary release</h2>
+
+<p>See <a href="https://github.com/taskcluster/taskcluster-proxy/releases">releases page</a>
+and choose a download that matches your platform.</p>
+
+<h2>
+<a id="download-source-and-install-via-go-get" class="anchor" href="#download-source-and-install-via-go-get" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download source and install via <code>go get</code>
+</h2>
+
+<p>Alternatively you can build and install from source:</p>
+
+<div class="highlight highlight-source-shell"><pre>go get github.com/taskcluster/taskcluster-proxy</pre></div>
+
+<h2>
+<a id="running" class="anchor" href="#running" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running</h2>
+
+<p>If you make source changes, <code>go install ./...</code> will rebuild and reinstall <code>taskcluster-proxy</code>
+in your <code>GOPATH</code> for you.</p>
+
+<h4>
+<a id="credentials-via-command-line-options" class="anchor" href="#credentials-via-command-line-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credentials via Command Line Options</h4>
+
+<pre><code>$ "${GOPATH}/bin/taskcluster-proxy" --help
+Taskcluster authentication proxy. By default this pulls all scopes from a
+particular task but additional scopes may be added by specifying them after the
+task id.
+
+  Usage:
+    taskcluster-proxy [options] &lt;taskId&gt; [&lt;scope&gt;...]
+    taskcluster-proxy --help
+
+  Options:
+    -h --help                       Show this help screen.
+    --version                       Show the taskcluster-proxy version number.
+    -p --port &lt;port&gt;                Port to bind the proxy server to [default: 8080].
+    --client-id &lt;clientId&gt;          Use a specific auth.taskcluster hawk client id [default: ].
+    --access-token &lt;accessToken&gt;    Use a specific auth.taskcluster hawk access token [default: ].
+    --certificate &lt;certificate&gt;     Use a specific auth.taskcluster hawk certificate [default: ].
+</code></pre>
+
+<h4>
+<a id="credentials-via-environment-variables" class="anchor" href="#credentials-via-environment-variables" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credentials via Environment Variables</h4>
+
+<p>Credentials may also be passed using environment variables:</p>
+
+<ul>
+<li><code>TASKCLUSTER_CLIENT_ID</code></li>
+<li><code>TASKCLUSTER_ACCESS_TOKEN</code></li>
+<li>
+<code>TASKCLUSTER_CERITIFICATE</code> (when using temporary credentials)</li>
+</ul>
+
+<p><strong>Please do not use these environment variables in production</strong>,
+instead use command line options as described above.</p>
+
+<h2>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>Examples</h2>
+
+<p>For simplicity the below examples run under <code>localhost</code>. This is also how
+taskcluster-proxy is used by docker-worker: taskcluster-proxy runs in a linked
+container and is accessed from the docker-worker container via a http(s)
+connection (typically https://localhost:60024/).</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># Start the proxy server; note that 2sz... is the taskId</span>
+taskcluster-proxy 2szAy1JzSr6pyjVCdiTcoQ -p 60024</pre></div>
+
+<h4>
+<a id="fetch-a-task" class="anchor" href="#fetch-a-task" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fetch a task</h4>
+
+<div class="highlight highlight-source-shell"><pre>curl localhost:60024/queue/v1/task/2szAy1JzSr6pyjVCdiTcoQ</pre></div>
+
+<h4>
+<a id="create-a-signed-url-for-the-given-task-bewit" class="anchor" href="#create-a-signed-url-for-the-given-task-bewit" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create a signed url for the given task (bewit)</h4>
+
+<p>Note: the given taskId below is just an example for demonstration purposes.</p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c"># Returned url will last one hour</span>
+curl localhost:60024/bewit --data <span class="pl-s"><span class="pl-pds">'</span>https://queue.taskcluster.net/v1/task/2szAy1JzSr6pyjVCdiTcoQ<span class="pl-pds">'</span></span></pre></div>
+
+<h2>
+<a id="creating-a-docker-image-for-the-proxy" class="anchor" href="#creating-a-docker-image-for-the-proxy" aria-hidden="true"><span class="octicon octicon-link"></span></a>Creating a docker image for the proxy</h2>
+
+<p>The proxy runs fine natively, but if you wish, you can also create a docker image to run it in.</p>
+
+<div class="highlight highlight-source-shell"><pre>./build.sh user/taskcluster-proxy</pre></div>
+
+<h2>
+<a id="running-tests" class="anchor" href="#running-tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running tests</h2>
+
+<p>To run the full test suites you need taskcluster credentials with at least the
+following scopes:</p>
+
+<ul>
+<li><code>auth:azure-table-access:fakeaccount/DuMmYtAbLe</code></li>
+<li><code>queue:get-artifact:private/build/sources.xml</code></li>
+</ul>
+
+<p>The credentials are expected to be in the <code>TASKCLUSTER_CLIENT_ID</code> and
+<code>TASKCLUSTER_ACCESS_TOKEN</code> environment variables (and optionally the
+<code>TASKCLUSTER_CERTIFICATE</code> environment variable if using temporary credentials).</p>
+
+<p>Then run <code>go test -v ./...</code> from the top level source directory.</p>
+
+<h2>
+<a id="making-a-release" class="anchor" href="#making-a-release" aria-hidden="true"><span class="octicon octicon-link"></span></a>Making a release</h2>
+
+<p>This process needs to be automated. Just documenting it now as I work it out. =)</p>
+
+<ol>
+<li>Choose an appropriate version number, <em>X.Y.Z</em>
+</li>
+<li>Update version number in <code>main.go</code>
+</li>
+<li><code>git add main.go; git commit -m "Bumped version number to X.Y.Z"</code></li>
+<li>
+<code>git tag vX.Y.Z</code> (note the prefix <code>v</code> in the tag name)</li>
+<li><code>git push; git push --tags</code></li>
+<li>Wait for release to magically appear <a href="https://github.com/taskcluster/taskcluster-proxy/releases">here</a> thanks to travis.</li>
+<li>Start docker daemon, if not already running (e.g. <code>boot2docker start</code>)</li>
+<li>
+<code>./build.sh taskcluster/taskcluster-proxy:X.Y.Z</code> (no <code>v</code> prefix)</li>
+<li><code>./build.sh taskcluster/taskcluster-proxy:latest</code></li>
+<li>
+<code>docker push taskcluster/taskcluster-proxy:X.Y.Z</code> (no <code>v</code> prefix in version)</li>
+<li><code>docker push taskcluster/taskcluster-proxy:latest</code></li>
+<li>Confirm releases appear <a href="https://hub.docker.com/r/taskcluster/taskcluster-proxy/tags/">here</a>
+</li>
+</ol>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/taskcluster/taskcluster-proxy">Taskcluster-proxy</a> is maintained by <a href="https://github.com/taskcluster">taskcluster</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>

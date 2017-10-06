@@ -136,11 +136,13 @@ func checkStatusCode(t *testing.T, res *httptest.ResponseRecorder, statusCode in
 	if err != nil {
 		t.Fatalf("Could not read response body: %v", err)
 	}
-	// make sure we get at least a few bytes of a response body...
-	// even http 303 should have some body, see
+	// Make sure we get at least a few bytes of a response body...
+	// Even HTTP 303 should have some body, see
 	// https://tools.ietf.org/html/rfc7231#section-6.4.4
-	if len(respBody) < 10 {
-		t.Error("Expected a response body (at least 10 bytes), but get less (or none).")
+	// TestRetrievePrivateArtifact retrieves an artifact with
+	// 14 bytes, so let's set that as minimum.
+	if len(respBody) < 14 {
+		t.Error("Expected a response body (at least 14 bytes), but get less (or none).")
 		t.Logf("Headers: %s", res.Header())
 		t.Logf("Response received:\n%s", string(respBody))
 	}

@@ -3,3 +3,4 @@
 
 # Coverage report
 coverage.report
+/vendor/*/

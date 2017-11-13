@@ -12,6 +12,8 @@ import (
 	"github.com/taskcluster/taskcluster-client-go/queue"
 )
 
+import _ "github.com/theckman/goconstraint/go1.8/gte"
+
 var version = "Taskcluster proxy 4.0.1"
 var usage = `
 Taskcluster authentication proxy. By default this pulls all scopes from a
